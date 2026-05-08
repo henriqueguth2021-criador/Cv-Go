@@ -476,7 +476,8 @@ async function runAnalysis(){
 
 function renderAnalysis(d){
   document.getElementById('analysis-loading').style.display='none';
-  const score=Math.min(100,Math.max(0,d.score));
+  const metricsAvg=d.metrics?Math.round(((d.metrics.keywords||0)+(d.metrics.experience||0)+(d.metrics.skills||0)+(d.metrics.format||0))/4):d.score;
+  const score=Math.min(100,Math.max(0,metricsAvg));
   document.getElementById('scoreNum').textContent=score;
   const c=score>=75?'#22C98B':score>=50?'#FFB547':'#FF5F6D';
   document.getElementById('scoreNum').style.color=c;document.getElementById('scoreArc').style.stroke=c;
