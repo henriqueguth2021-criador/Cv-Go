@@ -177,11 +177,24 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
 <body>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
+<div class="modal-overlay" id="settingsModal" style="display:none" onclick="if(event.target===this)closeSettings()">
+  <div class="modal-box">
+    <div class="modal-title">⚙️ Configurações da API</div>
+    <div class="modal-sub">Insira sua chave do Groq para usar o CvGo.</div>
+    <div class="modal-tip">💡 Obtenha em <strong>console.groq.com</strong> → API Keys → Create API Key</div>
+    <input class="modal-input" id="apiKeyInput" type="password" placeholder="gsk_..."/>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeSettings()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Salvar</button>
+    </div>
+  </div>
+</div>
 <nav>
   <a class="logo" href="#"><div class="logo-icon">🎯</div>Cv<span>Go</span></a>
   <div class="nav-right">
     <button class="btn-icon" onclick="showPanel('history')" title="Histórico">🕑</button>
-      <div class="nav-badge">✦ Groq AI · Llama 3.3</div>
+    <button class="btn-icon" onclick="openSettings()" title="Configurações">⚙️</button>
+    <div class="nav-badge">✦ Groq AI · Llama 3.3</div>
   </div>
 </nav>
 <section class="hero">
@@ -356,7 +369,9 @@ const getKey=()=>localStorage.getItem('cvgo_key')||DEFAULT_KEY;
 const getAPI=()=>"https://api.groq.com/openai/v1/chat/completions";
 let analysisData=null,rewrittenResume='',coverLetter='';
 
-
+function openSettings(){document.getElementById('apiKeyInput').value=localStorage.getItem('cvgo_key')||'';document.getElementById('settingsModal').style.display='flex';}
+function closeSettings(){document.getElementById('settingsModal').style.display='none';}
+function saveSettings(){const v=document.getElementById('apiKeyInput').value.trim();if(v)localStorage.setItem('cvgo_key',v);closeSettings();alert('Chave salva!');}
 
 document.getElementById('resumeText').addEventListener('input',function(){document.getElementById('resumeChars').textContent=this.value.length.toLocaleString('pt-BR')+' caracteres';checkInputs();});
 document.getElementById('jobText').addEventListener('input',function(){document.getElementById('jobChars').textContent=this.value.length.toLocaleString('pt-BR')+' caracteres';checkInputs();});
@@ -489,7 +504,7 @@ async function runRewrite(){
   const msgs=['Estruturando formato ATS...','Inserindo palavras-chave...','Reescrevendo experiências...','Finalizando...'];
   let mi=0;const lm=document.getElementById('resumeLoadingMsg');const iv=setInterval(()=>{lm.textContent=msgs[Math.min(++mi,msgs.length-1)];},2000);
   const missing=analysisData?(analysisData.keywords_missing||[]).join(', '):'';
-  const prompt='Reescreva o currículo no formato ATS.\n\nCURRÍCULO:\n'+truncateText(resume,4000)+'\n\nVAGA:\n'+truncateText(job,1500)+'\n\n'+(missing?'PALAVRAS-CHAVE: '+missing+'\n\n':'')+'FORMATO:\nNOME COMPLETO\nCargo | Especialidade | Especialidade\nEmail | Telefone | Cidade\n\nOBJETIVO PROFISSIONAL\n[2-3 linhas]\n\nRESUMO PROFISSIONAL\n[5-7 linhas]\n\nEXPERIÊNCIA PROFISSIONAL\nCargo | Empresa\nData\n• bullet (PRESERVE TODOS os bullets originais)\nResultados:\n• resultado\n\nFORMAÇÃO\nCurso | Instituição | Período\n\nCOMPETÊNCIAS\nHabilidade 1 | Habilidade 2 | Habilidade 3\n\nIDIOMAS\nIdioma – Nível\n\nRetorne APENAS o currículo.';
+  const prompt='Reescreva o currículo no formato ATS.\n\nCURRÍCULO:\n'+truncateText(resume,4000)+'\n\nVAGA:\n'+truncateText(job,1500)+'\n\n'+(missing?'PALAVRAS-CHAVE: '+missing+'\n\n':'')+'REGRAS CRITICAS:\n1. PRESERVE TODA a formacao academica original - nao omita nenhum curso, MBA, graduacao ou certificacao\n2. PRESERVE TODOS os bullets de cada experiencia sem cortar\n3. Competencias em linha separadas por |\n\nFORMATO:\nNOME COMPLETO\nCargo | Especialidade | Especialidade\nEmail | Telefone | Cidade\n\nOBJETIVO PROFISSIONAL\n[2-3 linhas alinhadas a vaga]\n\nRESUMO PROFISSIONAL\n[5-7 linhas com palavras-chave da vaga]\n\nEXPERIENCIA PROFISSIONAL\nCargo | Empresa\nData\n• [PRESERVE TODOS os bullets originais sem cortar nem resumir]\nResultados:\n• resultado com numero\n\nFORMACAO ACADEMICA\n[OBRIGATORIO: copie TODA a formacao do curriculo original sem omitir nenhuma]\nCurso – Status\nInstituicao | Periodo\n\nCOMPETENCIAS TECNICAS\nHabilidade 1 | Habilidade 2 | Habilidade 3 | Habilidade 4\n\nIDIOMAS\nIdioma – Nivel\n\nRetorne APENAS o curriculo completo.';
   try{
     const text=await callGroq(prompt,6000,0.4);clearInterval(iv);
     rewrittenResume=text;document.getElementById('resumeOutput').textContent=rewrittenResume;
