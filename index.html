@@ -543,61 +543,79 @@ function runRewrite(){
   document.getElementById('resume-loading').style.display = 'block';
   document.getElementById('resume-result').style.display = 'none';
   resetProgress('progressFill2', 12);
-  var msgs = ['Estruturando formato ATS...','Inserindo palavras-chave...','Corrigindo pontos de melhoria...','Finalizando...'];
+  var msgs = ['Analisando pontos de melhoria...','Adicionando palavras-chave...','Ajustando formato ATS...','Finalizando...'];
   var mi = 0; var lm = document.getElementById('resumeLoadingMsg');
   var iv = setInterval(function(){ lm.textContent = msgs[Math.min(++mi, msgs.length-1)]; }, 2500);
 
   var missing = analysisData ? (analysisData.keywords_missing || []) : [];
-  var found = analysisData ? (analysisData.keywords_found || []) : [];
   var weaknesses = analysisData ? (analysisData.weaknesses || []) : [];
+  var tips = analysisData ? (analysisData.tips || []) : [];
 
-  // Extract education from resume
+  // Extract education from resume to guarantee preservation
   var lines = resume.split('\n');
   var eduLines = []; var inEdu = false;
   for(var i = 0; i < lines.length; i++){
     var l = lines[i].toLowerCase();
-    var eduKeys = ['forma', 'gradua', 'mba', 'tecno', 'universidade', 'faculdade', 'bacharel', 'pos-grad', 'especiali'];
-    if(eduKeys.some(function(k){ return l.indexOf(k) >= 0; })) inEdu = true;
+    if(['forma','gradua','mba','tecno','universidade','faculdade','bacharel','pos-grad','especiali'].some(function(k){ return l.indexOf(k) >= 0; })) inEdu = true;
     if(inEdu){ eduLines.push(lines[i]); if(lines[i].trim() === '' && eduLines.length > 3) break; }
   }
   var edu = eduLines.join('\n').trim();
 
-  var prompt = 'Voce e especialista em curriculos ATS. Reescreva o curriculo abaixo para atingir 100% de compatibilidade com a vaga.\n\n'
-    + 'CURRICULO ORIGINAL:\n' + truncate(resume, 4500) + '\n\n'
-    + 'VAGA:\n' + truncate(job, 1200) + '\n\n'
-    + (missing.length ? 'PALAVRAS-CHAVE AUSENTES - INSIRA TODAS (uma vez cada, de forma natural):\n' + missing.join(', ') + '\n\n' : '')
-    + (found.length ? 'PALAVRAS-CHAVE JA PRESENTES - MANTENHA TODAS:\n' + found.join(', ') + '\n\n' : '')
-    + (weaknesses.length ? 'PONTOS DE MELHORIA - CORRIJA ADAPTANDO EXPERIENCIAS REAIS:\n' + weaknesses.join('\n') + '\n\n' : '')
-    + (edu ? 'FORMACAO ACADEMICA - COPIE EXATAMENTE:\n' + edu + '\n\n' : '')
-    + 'INSTRUCOES:\n'
-    + '1. Estrutura UNICA em ordem: NOME/CONTATO > OBJETIVO > RESUMO > EXPERIENCIA > FORMACAO > COMPETENCIAS > IDIOMAS\n'
-    + '2. Cada secao aparece UMA UNICA VEZ - nao repita nada\n'
-    + '3. SEM markdown: nao use **, *, ##, -- ou qualquer formatacao. Texto puro apenas\n'
-    + '4. Bullets: use apenas o simbolo • para cada item\n'
-    + '5. Preserve TODOS os bullets de cada experiencia\n'
-    + '6. Competencias: lista em linha separada por |\n'
-    + '7. Nao invente empresas, cargos ou informacoes\n'
-    + '8. Retorne APENAS o curriculo sem comentarios ou explicacoes';
+  var prompt =
+    'Voce e especialista em curriculos ATS. Sua tarefa e MELHORAR o curriculo abaixo SEM piorar o que ja esta bom.\n\n'
+    + 'REGRAS CRITICAS:\n'
+    + '1. NAO remova nenhum bullet point, experiencia ou habilidade que ja existe\n'
+    + '2. NAO altere nomes de empresas, cargos ou datas\n'
+    + '3. APENAS adicione as palavras-chave ausentes de forma natural\n'
+    + '4. APENAS corrija os pontos de melhoria usando experiencias ja existentes\n'
+    + '5. Mantenha o mesmo estilo e tom do curriculo original\n'
+    + '6. Texto puro, sem markdown, sem **, sem ##\n'
+    + '7. Use bullet • para todos os itens\n'
+    + '8. Cada secao aparece UMA vez\n\n'
+    + 'CURRICULO ORIGINAL (preserve tudo isso):\n' + truncate(resume, 4500) + '\n\n'
+    + 'VAGA:\n' + truncate(job, 800) + '\n\n'
+    + (missing.length ? 'PALAVRAS PARA ADICIONAR (insira 1x de forma natural no resumo ou competencias):\n' + missing.join(', ') + '\n\n' : '')
+    + (weaknesses.length ? 'PONTOS A MELHORAR (adapte frases existentes, nao invente):\n' + weaknesses.join('\n') + '\n\n' : '')
+    + (edu ? 'FORMACAO (copie exatamente, nao altere):\n' + edu + '\n\n' : '')
+    + 'FORMATO DE SAIDA:\n'
+    + 'NOME COMPLETO\n'
+    + 'Cargo | Especialidade\n'
+    + 'Email | Telefone | Cidade\n\n'
+    + 'OBJETIVO PROFISSIONAL\n'
+    + '[2-3 linhas]\n\n'
+    + 'RESUMO PROFISSIONAL\n'
+    + '[5-6 linhas com palavras-chave adicionadas aqui]\n\n'
+    + 'EXPERIENCIA PROFISSIONAL\n'
+    + '[COPIE todas as experiencias e bullets do original exatamente]\n\n'
+    + 'FORMACAO ACADEMICA\n'
+    + '[COPIE exatamente]\n\n'
+    + 'COMPETENCIAS TECNICAS\n'
+    + '[habilidades do original + novas palavras-chave | separadas por |]\n\n'
+    + 'IDIOMAS\n'
+    + '[do original]\n\n'
+    + 'Retorne APENAS o curriculo. Texto puro sem markdown.';
 
-  callGroq(prompt, 4000, 0.2, function(text, err){
+  callGroq(prompt, 5000, 0.1, function(text, err){
     clearInterval(iv);
     document.getElementById('resume-loading').style.display = 'none';
-    if(err){ document.getElementById('resume-result').innerHTML = '<div class="error-box">Erro: ' + err + '</div>'; document.getElementById('resume-result').style.display = 'block'; return; }
-    // Remove markdown formatting from output
+    if(err){
+      document.getElementById('resume-result').innerHTML = '<div class="error-box">Erro: ' + err + '</div>';
+      document.getElementById('resume-result').style.display = 'block';
+      return;
+    }
+    // Clean any markdown that slipped through
     rewrittenResume = text
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
       .replace(/^#+\s*/gm, '')
-      .replace(/^\s*[-–]\s*/gm, '• ')
-      .replace(/^\s*\+\s*/gm, '• ')
+      .replace(/^\s*[-–]\s+/gm, '• ')
+      .replace(/^\s*\+\s+/gm, '• ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
     document.getElementById('resumeOutput').textContent = rewrittenResume;
     document.getElementById('resume-result').style.display = 'block';
   });
 }
-
-// ── COVER LETTER ──
 function runCoverLetter(){
   var resume = document.getElementById('resumeText').value.trim();
   var job = document.getElementById('jobText').value.trim();
