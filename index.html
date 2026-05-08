@@ -476,7 +476,14 @@ async function runAnalysis(){
 
 function renderAnalysis(d){
   document.getElementById('analysis-loading').style.display='none';
-  const score=Math.min(100,Math.max(0,d.score));
+  // Calculate real average from metrics
+  const metricsAvg = d.metrics ? Math.round((
+    (d.metrics.keywords||0) + 
+    (d.metrics.experience||0) + 
+    (d.metrics.skills||0) + 
+    (d.metrics.format||0)
+  ) / 4) : d.score;
+  const score = Math.min(100, Math.max(0, metricsAvg));
   document.getElementById('scoreNum').textContent=score;
   const c=score>=75?'#22C98B':score>=50?'#FFB547':'#FF5F6D';
   document.getElementById('scoreNum').style.color=c;document.getElementById('scoreArc').style.stroke=c;
@@ -504,7 +511,23 @@ async function runRewrite(){
   const msgs=['Estruturando formato ATS...','Inserindo palavras-chave...','Reescrevendo experiências...','Finalizando...'];
   let mi=0;const lm=document.getElementById('resumeLoadingMsg');const iv=setInterval(()=>{lm.textContent=msgs[Math.min(++mi,msgs.length-1)];},2000);
   const missing=analysisData?(analysisData.keywords_missing||[]).join(', '):'';
-  const prompt='Reescreva o currículo no formato ATS.\n\nCURRÍCULO:\n'+truncateText(resume,4000)+'\n\nVAGA:\n'+truncateText(job,1500)+'\n\n'+(missing?'PALAVRAS-CHAVE: '+missing+'\n\n':'')+'REGRAS CRITICAS:\n1. PRESERVE TODA a formacao academica original - nao omita nenhum curso, MBA, graduacao ou certificacao\n2. PRESERVE TODOS os bullets de cada experiencia sem cortar\n3. Competencias em linha separadas por |\n\nFORMATO:\nNOME COMPLETO\nCargo | Especialidade | Especialidade\nEmail | Telefone | Cidade\n\nOBJETIVO PROFISSIONAL\n[2-3 linhas alinhadas a vaga]\n\nRESUMO PROFISSIONAL\n[5-7 linhas com palavras-chave da vaga]\n\nEXPERIENCIA PROFISSIONAL\nCargo | Empresa\nData\n• [PRESERVE TODOS os bullets originais sem cortar nem resumir]\nResultados:\n• resultado com numero\n\nFORMACAO ACADEMICA\n[OBRIGATORIO: copie TODA a formacao do curriculo original sem omitir nenhuma]\nCurso – Status\nInstituicao | Periodo\n\nCOMPETENCIAS TECNICAS\nHabilidade 1 | Habilidade 2 | Habilidade 3 | Habilidade 4\n\nIDIOMAS\nIdioma – Nivel\n\nRetorne APENAS o curriculo completo.';
+  const resumeFull = resume;
+  const jobFull = job;
+  // Extract education section to guarantee it's included
+  const eduKeywords = ['formação','formacao','graduação','graduacao','mba','tecnólogo','tecnologo','especialização','especializacao','universidade','faculdade','instituto','curso','bacharel','licenciatura','pós','pos-grad'];
+  const lines = resumeFull.split('\n');
+  let eduLines = [];
+  let inEdu = false;
+  for (const line of lines) {
+    const lower = line.toLowerCase();
+    if (eduKeywords.some(k => lower.includes(k))) inEdu = true;
+    if (inEdu) {
+      eduLines.push(line);
+      if (line.trim() === '' && eduLines.length > 3) inEdu = false;
+    }
+  }
+  const eduSection = eduLines.join('\n').trim();
+  const prompt='Você é especialista em currículos ATS. Reescreva o currículo abaixo para ficar 100% compatível com a vaga.\n\nCURRÍCULO ORIGINAL:\n'+truncateText(resumeFull,5000)+'\n\nVAGA:\n'+truncateText(jobFull,1500)+'\n\n'+(missing?'PALAVRAS-CHAVE AUSENTES - INSERIR OBRIGATORIAMENTE (adapte o texto para incluir naturalmente):\n'+missing+'\n\n':'')+(eduSection?'FORMAÇÃO ACADÊMICA DO CANDIDATO (COPIE EXATAMENTE):\n'+eduSection+'\n\n':'')+'REGRAS:\n1. Insira TODAS as palavras-chave ausentes de forma natural no resumo e experiências\n2. PRESERVE TODOS os bullets de cada experiência sem cortar\n3. COPIE EXATAMENTE a formação acadêmica acima\n4. Competências em linha separadas por |\n5. Sem tabelas, colunas ou ícones\n\nFORMATO:\nNOME COMPLETO\nCargo | Especialidade | Especialidade\nEmail | Telefone | Cidade\n\nOBJETIVO PROFISSIONAL\n[2-3 linhas com termos da vaga]\n\nRESUMO PROFISSIONAL\n[5-7 linhas com palavras-chave da vaga inseridas naturalmente]\n\nEXPERIÊNCIA PROFISSIONAL\nCargo | Empresa\nData\n• bullet original 1\n• bullet original 2\n[TODOS os bullets originais]\nResultados:\n• resultado com número\n\nFORMAÇÃO ACADÊMICA\n[copie exatamente a formação fornecida acima]\n\nCOMPETÊNCIAS TÉCNICAS\nHabilidade 1 | Habilidade 2 | Habilidade 3\n\nIDIOMAS\nIdioma – Nível\n\nRetorne APENAS o currículo completo.';
   try{
     const text=await callGroq(prompt,6000,0.4);clearInterval(iv);
     rewrittenResume=text;document.getElementById('resumeOutput').textContent=rewrittenResume;
