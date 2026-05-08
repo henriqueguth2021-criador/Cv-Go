@@ -502,32 +502,64 @@ async function runRewrite(){
   const resume=document.getElementById('resumeText').value.trim(),job=document.getElementById('jobText').value.trim();
   showPanel('resume');document.getElementById('resume-loading').style.display='block';document.getElementById('resume-result').style.display='none';
   resetProgress('progressFill2',12);
-  const msgs=['Estruturando formato ATS...','Inserindo palavras-chave...','Reescrevendo experiências...','Finalizando...'];
+  const msgs=['Estruturando formato ATS...','Inserindo palavras-chave...','Corrigindo pontos de melhoria...','Finalizando...'];
   let mi=0;const lm=document.getElementById('resumeLoadingMsg');const iv=setInterval(()=>{lm.textContent=msgs[Math.min(++mi,msgs.length-1)];},2000);
-  const missing=analysisData?(analysisData.keywords_missing||[]):'';
-  const missingStr=Array.isArray(missing)?missing.join(', '):missing;
-  const missingList=Array.isArray(missing)&&missing.length>0?missing.map((k,i)=>(i+1)+'. '+k).join('\n'):'';
-  // Extract education from resume
+
+  const missing=analysisData?(analysisData.keywords_missing||[]):[];
+  const found=analysisData?(analysisData.keywords_found||[]):[];
+  const weaknesses=analysisData?(analysisData.weaknesses||[]):[];
+  const tips=analysisData?(analysisData.tips||[]):[];
+
+  const missingList=missing.length>0?missing.map((k,i)=>(i+1)+'. '+k).join('\n'):'';
+  const foundList=found.length>0?found.join(', '):'';
+  const weaknessesList=weaknesses.length>0?weaknesses.map((w,i)=>(i+1)+'. '+w).join('\n'):'';
+  const tipsList=tips.length>0?tips.map((t,i)=>(i+1)+'. '+t).join('\n'):'';
+
+  // Extract education section
   const eduLines=[];let inEdu=false;
   for(const line of resume.split('\n')){
     const l=line.toLowerCase();
-    if(['formação','formacao','graduação','mba','tecnólogo','especializacao','universidade','faculdade','bacharel','pós-grad'].some(k=>l.includes(k)))inEdu=true;
+    if(['formação','formacao','graduação','mba','tecnólogo','especializacao','universidade','faculdade','bacharel','pós'].some(k=>l.includes(k)))inEdu=true;
     if(inEdu){eduLines.push(line);if(line.trim()===''&&eduLines.length>4)inEdu=false;}
   }
   const eduSection=eduLines.join('\n').trim();
-  const prompt='Você é especialista em currículos ATS. Reescreva o currículo para ficar 100% compatível com a vaga.\n\n'
-    +(missingList?'ATENÇÃO - PALAVRAS-CHAVE OBRIGATÓRIAS (TODAS devem aparecer no currículo gerado):\n'+missingList+'\n\nInsira cada palavra acima no Resumo Profissional, Experiências ou Competências. Não gere o currículo sem incluir todas elas.\n\n':'')
-    +(eduSection?'FORMAÇÃO ACADÊMICA DO CANDIDATO (copie exatamente no currículo):\n'+eduSection+'\n\n':'')
-    +'CURRÍCULO ORIGINAL:\n'+truncateText(resume,5000)+'\n\nVAGA:\n'+truncateText(job,1500)+'\n\n'
-    +(missingStr?'COMPETÊNCIAS A ADICIONAR: '+missingStr+'\n\n':'')
-    +'FORMATO OBRIGATÓRIO:\nNOME COMPLETO\nCargo | Especialidade | Especialidade\nEmail | Telefone | Cidade\n\nOBJETIVO PROFISSIONAL\n[2-3 linhas com termos da vaga]\n\nRESUMO PROFISSIONAL\n[5-7 linhas - inclua as palavras-chave obrigatórias aqui]\n\nEXPERIÊNCIA PROFISSIONAL\nCargo | Empresa\nData\n• [PRESERVE TODOS os bullets originais sem cortar]\nResultados:\n• resultado com número\n\nFORMAÇÃO ACADÊMICA\n[COPIE EXATAMENTE a formação fornecida acima]\n\nCOMPETÊNCIAS TÉCNICAS\n[inclua as palavras-chave obrigatórias aqui também]\nHabilidade 1 | Habilidade 2 | Habilidade 3\n\nIDIOMAS\nIdioma – Nível\n\nRetorne APENAS o currículo completo.';
+
+  const prompt='Você é especialista em currículos ATS. Reescreva o currículo para atingir 100% de compatibilidade com a vaga.\n\n'
+    +'=== REGRA 1 - PALAVRAS JÁ PRESENTES (MANTENHA TODAS) ===\n'+(foundList||'nenhuma')+'\n\n'
+    +(missingList?'=== REGRA 2 - PALAVRAS AUSENTES (INSIRA TODAS OBRIGATORIAMENTE) ===\n'+missingList+'\nCada palavra DEVE aparecer no currículo gerado.\n\n':'')
+    +(weaknessesList?'=== REGRA 3 - PONTOS DE MELHORIA (CORRIJA TODOS NO CURRÍCULO) ===\n'+weaknessesList+'\nPara cada ponto de melhoria acima, adicione experiências, habilidades ou contexto relevante no currículo para suprir essa lacuna. Use experiências reais do candidato de forma estratégica.\n\n':'')
+    +(tipsList?'=== REGRA 4 - DICAS ESTRATÉGICAS (APLIQUE TODAS) ===\n'+tipsList+'\n\n':'')
+    +(eduSection?'=== REGRA 5 - FORMAÇÃO ACADÊMICA (COPIE EXATAMENTE) ===\n'+eduSection+'\n\n':'')
+    +'=== CURRÍCULO ORIGINAL ===\n'+truncateText(resume,4500)+'\n\n'
+    +'=== VAGA ALVO ===\n'+truncateText(job,1500)+'\n\n'
+    +'=== FORMATO OBRIGATÓRIO ===\n'
+    +'NOME COMPLETO\n'
+    +'Cargo | Especialidade | Especialidade\n'
+    +'Email | Telefone | Cidade\n\n'
+    +'OBJETIVO PROFISSIONAL\n'
+    +'[2-3 linhas alinhadas à vaga, com palavras-chave da Regra 2]\n\n'
+    +'RESUMO PROFISSIONAL\n'
+    +'[5-7 linhas: inclua TODAS as palavras das Regras 1 e 2, e aborde os pontos de melhoria da Regra 3]\n\n'
+    +'EXPERIÊNCIA PROFISSIONAL\n'
+    +'Cargo | Empresa\nData\n'
+    +'• [PRESERVE TODOS os bullets originais]\n'
+    +'• [Adicione bullets extras se necessário para cobrir pontos de melhoria da Regra 3]\n'
+    +'Resultados:\n• resultado com número\n\n'
+    +'FORMAÇÃO ACADÊMICA\n'
+    +'[Copie EXATAMENTE da Regra 5]\n\n'
+    +'COMPETÊNCIAS TÉCNICAS\n'
+    +'[Inclua palavras das Regras 1 e 2, e habilidades que cobrem a Regra 3]\n'
+    +'Habilidade 1 | Habilidade 2 | Habilidade 3\n\n'
+    +'IDIOMAS\nIdioma – Nível\n\n'
+    +'IMPORTANTE: Não invente empresas ou cargos. Use apenas informações reais do currículo original, mas adapte e expanda a linguagem para cobrir todos os pontos.\n'
+    +'Retorne APENAS o currículo completo.';
+
   try{
-    const text=await callGroq(prompt,6000,0.4);clearInterval(iv);
+    const text=await callGroq(prompt,6000,0.3);clearInterval(iv);
     rewrittenResume=text;document.getElementById('resumeOutput').textContent=rewrittenResume;
     document.getElementById('resume-loading').style.display='none';document.getElementById('resume-result').style.display='block';
   }catch(e){clearInterval(iv);document.getElementById('resume-loading').style.display='none';document.getElementById('resume-result').innerHTML='<div class="error-box">❌ '+e.message+'</div>';document.getElementById('resume-result').style.display='block';}
 }
-
 async function runCoverLetter(){
   const resume=document.getElementById('resumeText').value.trim(),job=document.getElementById('jobText').value.trim();
   showPanel('letter');document.getElementById('letter-loading').style.display='block';document.getElementById('letter-result').style.display='none';
