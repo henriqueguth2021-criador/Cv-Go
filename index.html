@@ -256,7 +256,7 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
         </div>
         <div class="upload-status" id="uploadStatus"><div class="upload-spinner"></div><span id="uploadStatusText"></span></div>
         <div class="divider">ou cole o texto abaixo</div>
-        <textarea id="resumeText" rows="12" placeholder="João Silva&#10;Desenvolvedor Full Stack | São Paulo, SP&#10;joao@email.com | (11) 99999-9999&#10;&#10;EXPERIÊNCIA&#10;Senior Developer — Empresa XYZ (2021–2024)&#10;• Desenvolveu APIs REST com Node.js&#10;• Liderou equipe de 5 desenvolvedores&#10;&#10;FORMAÇÃO&#10;Ciência da Computação — USP (2018)"></textarea>
+        <textarea id="resumeText" rows="12" oninput="updateChars('resumeChars',this);checkInputs()" onpaste="setTimeout(()=>{updateChars('resumeChars',this);checkInputs();},50)" placeholder="João Silva&#10;Desenvolvedor Full Stack | São Paulo, SP&#10;joao@email.com | (11) 99999-9999&#10;&#10;EXPERIÊNCIA&#10;Senior Developer — Empresa XYZ (2021–2024)&#10;• Desenvolveu APIs REST com Node.js&#10;• Liderou equipe de 5 desenvolvedores&#10;&#10;FORMAÇÃO&#10;Ciência da Computação — USP (2018)"></textarea>
         <div class="char-count" id="resumeChars">0 caracteres</div>
       </div>
       <div class="field-card">
@@ -267,7 +267,7 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
             <div class="field-sub">Cole a vaga do LinkedIn, Gupy, etc.</div>
           </div>
         </div>
-        <textarea id="jobText" rows="20" placeholder="Desenvolvedor Full Stack Sênior&#10;Empresa ABC — São Paulo (Híbrido)&#10;&#10;Responsabilidades:&#10;• Desenvolver aplicações com React e Node.js&#10;• Arquitetar soluções com microsserviços&#10;&#10;Requisitos:&#10;• 5+ anos de experiência&#10;• React, TypeScript, Node.js&#10;• AWS ou GCP"></textarea>
+        <textarea id="jobText" rows="20" oninput="updateChars('jobChars',this);checkInputs()" onpaste="setTimeout(()=>{updateChars('jobChars',this);checkInputs();},50)" placeholder="Desenvolvedor Full Stack Sênior&#10;Empresa ABC — São Paulo (Híbrido)&#10;&#10;Responsabilidades:&#10;• Desenvolver aplicações com React e Node.js&#10;• Arquitetar soluções com microsserviços&#10;&#10;Requisitos:&#10;• 5+ anos de experiência&#10;• React, TypeScript, Node.js&#10;• AWS ou GCP"></textarea>
         <div class="char-count" id="jobChars">0 caracteres</div>
       </div>
     </div>
