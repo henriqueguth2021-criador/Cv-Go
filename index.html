@@ -256,7 +256,7 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
         </div>
         <div class="upload-status" id="uploadStatus"><div class="upload-spinner"></div><span id="uploadStatusText"></span></div>
         <div class="divider">ou cole o texto abaixo</div>
-        <textarea id="resumeText" rows="12" oninput="updateChars('resumeChars',this);checkInputs()" placeholder="João Silva&#10;Desenvolvedor Full Stack | São Paulo, SP&#10;joao@email.com | (11) 99999-9999&#10;&#10;EXPERIÊNCIA&#10;Senior Developer — Empresa XYZ (2021–2024)&#10;• Desenvolveu APIs REST com Node.js&#10;• Liderou equipe de 5 desenvolvedores&#10;&#10;FORMAÇÃO&#10;Ciência da Computação — USP (2018)">{updateChars('resumeChars',this);checkInputs();},50)" placeholder="João Silva&#10;Desenvolvedor Full Stack | São Paulo, SP&#10;joao@email.com | (11) 99999-9999&#10;&#10;EXPERIÊNCIA&#10;Senior Developer — Empresa XYZ (2021–2024)&#10;• Desenvolveu APIs REST com Node.js&#10;• Liderou equipe de 5 desenvolvedores&#10;&#10;FORMAÇÃO&#10;Ciência da Computação — USP (2018)"></textarea>
+        <textarea id="resumeText" rows="12">{updateChars('resumeChars',this);checkInputs();},50)" placeholder="João Silva&#10;Desenvolvedor Full Stack | São Paulo, SP&#10;joao@email.com | (11) 99999-9999&#10;&#10;EXPERIÊNCIA&#10;Senior Developer — Empresa XYZ (2021–2024)&#10;• Desenvolveu APIs REST com Node.js&#10;• Liderou equipe de 5 desenvolvedores&#10;&#10;FORMAÇÃO&#10;Ciência da Computação — USP (2018)"></textarea>
         <div class="char-count" id="resumeChars">0 caracteres</div>
       </div>
       <div class="field-card">
@@ -267,7 +267,7 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
             <div class="field-sub">Cole a vaga do LinkedIn, Gupy, etc.</div>
           </div>
         </div>
-        <textarea id="jobText" rows="20" oninput="updateChars('jobChars',this);checkInputs()" placeholder="Desenvolvedor Full Stack Sênior&#10;Empresa ABC — São Paulo (Híbrido)&#10;&#10;Responsabilidades:&#10;• Desenvolver aplicações com React e Node.js&#10;• Arquitetar soluções com microsserviços&#10;&#10;Requisitos:&#10;• 5+ anos de experiência&#10;• React, TypeScript, Node.js&#10;• AWS ou GCP">{updateChars('jobChars',this);checkInputs();},50)" placeholder="Desenvolvedor Full Stack Sênior&#10;Empresa ABC — São Paulo (Híbrido)&#10;&#10;Responsabilidades:&#10;• Desenvolver aplicações com React e Node.js&#10;• Arquitetar soluções com microsserviços&#10;&#10;Requisitos:&#10;• 5+ anos de experiência&#10;• React, TypeScript, Node.js&#10;• AWS ou GCP"></textarea>
+        <textarea id="jobText" rows="20">{updateChars('jobChars',this);checkInputs();},50)" placeholder="Desenvolvedor Full Stack Sênior&#10;Empresa ABC — São Paulo (Híbrido)&#10;&#10;Responsabilidades:&#10;• Desenvolver aplicações com React e Node.js&#10;• Arquitetar soluções com microsserviços&#10;&#10;Requisitos:&#10;• 5+ anos de experiência&#10;• React, TypeScript, Node.js&#10;• AWS ou GCP"></textarea>
         <div class="char-count" id="jobChars">0 caracteres</div>
       </div>
     </div>
@@ -788,23 +788,39 @@ function clearHistory(){
   }
 });
 
-// Fix paste - textarea oninput doesn't always fire on paste in Safari
-document.addEventListener('DOMContentLoaded', function() {
-  ['resumeText','jobText'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (!el) return;
-    var countId = id === 'resumeText' ? 'resumeChars' : 'jobChars';
-    el.addEventListener('paste', function() {
-      setTimeout(function() {
-        document.getElementById(countId).textContent = el.value.length.toLocaleString('pt-BR') + ' caracteres';
-        checkInputs();
-      }, 100);
-    });
     el.addEventListener('keyup', function() {
       document.getElementById(countId).textContent = el.value.length.toLocaleString('pt-BR') + ' caracteres';
       checkInputs();
     });
   });
+});
+// ── TEXTAREA EVENTS ──
+window.addEventListener('load', function() {
+  var rt = document.getElementById('resumeText');
+  var jt = document.getElementById('jobText');
+  
+  function updateR(){ 
+    document.getElementById('resumeChars').textContent = rt.value.length.toLocaleString('pt-BR') + ' caracteres';
+    var ok = rt.value.trim().length > 80 && jt.value.trim().length > 80;
+    document.getElementById('analyzeBtn').disabled = !ok;
+    document.getElementById('inputHint').textContent = ok ? '✅ Tudo pronto!' : 'Preencha os dois campos para continuar';
+  }
+  function updateJ(){ 
+    document.getElementById('jobChars').textContent = jt.value.length.toLocaleString('pt-BR') + ' caracteres';
+    var ok = rt.value.trim().length > 80 && jt.value.trim().length > 80;
+    document.getElementById('analyzeBtn').disabled = !ok;
+    document.getElementById('inputHint').textContent = ok ? '✅ Tudo pronto!' : 'Preencha os dois campos para continuar';
+  }
+  
+  rt.addEventListener('input', updateR);
+  rt.addEventListener('keyup', updateR);
+  rt.addEventListener('paste', function(){ setTimeout(updateR, 50); });
+  rt.setAttribute('placeholder', 'João Silva\nDesenvolvedor Full Stack | São Paulo, SP\n\nEXPERIÊNCIA\nSenior Developer — Empresa XYZ (2021–2024)\n• Desenvolveu APIs REST com Node.js');
+  
+  jt.addEventListener('input', updateJ);
+  jt.addEventListener('keyup', updateJ);
+  jt.addEventListener('paste', function(){ setTimeout(updateJ, 50); });
+  jt.setAttribute('placeholder', 'Desenvolvedor Full Stack Sênior\nEmpresa ABC — São Paulo (Híbrido)\n\nRequisitos:\n• 5+ anos de experiência\n• React, TypeScript, Node.js');
 });
 </script>
 </body>
