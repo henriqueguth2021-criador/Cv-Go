@@ -484,7 +484,7 @@ function runAnalysis(){
   var mi = 0; var lm = document.getElementById('loadingMsg');
   var iv = setInterval(function(){ lm.textContent = msgs[Math.min(++mi, msgs.length-1)]; }, 1800);
 
-  var prompt = 'Analise a compatibilidade entre curriculo e vaga. Retorne APENAS JSON valido sem markdown.\n\nCURRICULO:\n' + truncate(resume, 3000) + '\n\nVAGA:\n' + truncate(job, 2000) + '\n\nJSON esperado:\n{"score":0,"metrics":{"keywords":0,"experience":0,"skills":0,"format":0},"verdict":"","verdict_desc":"","keywords_found":[],"keywords_missing":[],"keywords_partial":[],"strengths":[],"weaknesses":[],"tips":[]}';
+  var prompt = 'Voce e especialista em recrutamento ATS. Analise a compatibilidade e retorne APENAS JSON valido sem markdown.\n\nREGRA IMPORTANTE: todos os valores numericos em score e metrics devem ser INTEIROS de 0 a 100 representando porcentagem real. Por exemplo: keywords:90 significa 90% de compatibilidade em palavras-chave. NUNCA retorne valores como 7, 8, 9 a menos que a compatibilidade seja realmente 7%.\n\nCURRICULO:\n' + truncate(resume, 3000) + '\n\nVAGA:\n' + truncate(job, 2000) + '\n\nRetorne EXATAMENTE neste formato (com valores reais de compatibilidade):\n{"score":85,"metrics":{"keywords":90,"experience":95,"skills":80,"format":75},"verdict":"Muito Bom","verdict_desc":"Curriculo bem alinhado com a vaga","keywords_found":["palavra1"],"keywords_missing":["palavra2"],"keywords_partial":["palavra3"],"strengths":["ponto forte 1"],"weaknesses":["melhoria 1"],"tips":["dica 1"]}'
 
   callGroq(prompt, 1200, 0.2, function(text, err){
     clearInterval(iv);
@@ -570,19 +570,28 @@ function runRewrite(){
     + (weaknesses.length ? 'PONTOS DE MELHORIA - CORRIJA ADAPTANDO EXPERIENCIAS REAIS:\n' + weaknesses.join('\n') + '\n\n' : '')
     + (edu ? 'FORMACAO ACADEMICA - COPIE EXATAMENTE:\n' + edu + '\n\n' : '')
     + 'INSTRUCOES:\n'
-    + '1. Estrutura UNICA e em ordem: NOME/CONTATO > OBJETIVO > RESUMO > EXPERIENCIA > FORMACAO > COMPETENCIAS > IDIOMAS\n'
-    + '2. Cada secao aparece UMA UNICA VEZ\n'
-    + '3. Nao repita palavras ou secoes\n'
-    + '4. Preserve TODOS os bullets de cada experiencia\n'
-    + '5. Competencias: lista em linha separada por |\n'
-    + '6. Nao invente empresas, cargos ou informacoes\n'
-    + '7. Retorne APENAS o curriculo, sem comentarios';
+    + '1. Estrutura UNICA em ordem: NOME/CONTATO > OBJETIVO > RESUMO > EXPERIENCIA > FORMACAO > COMPETENCIAS > IDIOMAS\n'
+    + '2. Cada secao aparece UMA UNICA VEZ - nao repita nada\n'
+    + '3. SEM markdown: nao use **, *, ##, -- ou qualquer formatacao. Texto puro apenas\n'
+    + '4. Bullets: use apenas o simbolo • para cada item\n'
+    + '5. Preserve TODOS os bullets de cada experiencia\n'
+    + '6. Competencias: lista em linha separada por |\n'
+    + '7. Nao invente empresas, cargos ou informacoes\n'
+    + '8. Retorne APENAS o curriculo sem comentarios ou explicacoes';
 
   callGroq(prompt, 4000, 0.2, function(text, err){
     clearInterval(iv);
     document.getElementById('resume-loading').style.display = 'none';
     if(err){ document.getElementById('resume-result').innerHTML = '<div class="error-box">Erro: ' + err + '</div>'; document.getElementById('resume-result').style.display = 'block'; return; }
-    rewrittenResume = text;
+    // Remove markdown formatting from output
+    rewrittenResume = text
+      .replace(/\*\*([^*]+)\*\*/g, '$1')
+      .replace(/\*([^*]+)\*/g, '$1')
+      .replace(/^#+\s*/gm, '')
+      .replace(/^\s*[-–]\s*/gm, '• ')
+      .replace(/^\s*\+\s*/gm, '• ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
     document.getElementById('resumeOutput').textContent = rewrittenResume;
     document.getElementById('resume-result').style.display = 'block';
   });
