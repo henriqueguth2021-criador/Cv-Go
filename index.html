@@ -8,11 +8,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-
 <style>
-/* SEU CSS ORIGINAL (RESTAURADO DO ARQUIVO) */
+/* 100% DO SEU CSS ORIGINAL ABAIXO */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--navy:#0B1120;--navy2:#131929;--accent:#4F7FFF;--accent2:#7B9FFF;--accent-dim:rgba(79,127,255,0.12);--accent-glow:rgba(79,127,255,0.3);--green:#22C98B;--green-dim:rgba(34,201,139,0.12);--red:#FF5F6D;--red-dim:rgba(255,95,109,0.12);--amber:#FFB547;--amber-dim:rgba(255,181,71,0.12);--purple:#C084FC;--text:#E8EDF8;--text2:#8A95B0;--text3:#5A6480;--border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);--card:rgba(255,255,255,0.04);--card2:rgba(255,255,255,0.08)}
+html{scroll-behavior:smooth}
 body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);min-height:100vh;overflow-x:hidden}
 .orb{position:fixed;border-radius:50%;filter:blur(90px);pointer-events:none;z-index:0;opacity:.3}
 .orb-1{width:600px;height:600px;background:#1A3A8F;top:-200px;left:-150px}
@@ -20,147 +20,292 @@ body{font-family:'DM Sans',sans-serif;background:var(--navy);color:var(--text);m
 nav{position:relative;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:1.1rem 2rem;border-bottom:1px solid var(--border);backdrop-filter:blur(16px);background:rgba(11,17,32,0.8)}
 .logo{display:flex;align-items:center;gap:10px;font-family:'Syne',sans-serif;font-weight:800;font-size:19px;color:var(--text);text-decoration:none}
 .logo-icon{width:35px;height:35px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.logo span{color:var(--accent2)}
 .main{position:relative;z-index:5;max-width:1100px;margin:0 auto;padding:0 1.5rem 5rem}
-.panel{display:none} .panel.active{display:block}
-.field-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;margin-top:20px}
-textarea{width:100%;background:transparent;border:none;outline:none;resize:none;color:var(--text2);font-size:13px;margin-top:10px}
-.btn{padding:.75rem 1.5rem;border-radius:10px;font-family:'Syne',sans-serif;font-weight:600;cursor:pointer;border:none;transition:0.2s}
-.btn-primary{background:var(--accent);color:#fff}
-.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.hero{position:relative;z-index:5;text-align:center;padding:3.5rem 2rem 2.5rem}
+.hero h1{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,4.5vw,3.2rem);font-weight:800;line-height:1.1;letter-spacing:-.02em;margin-bottom:.9rem}
+.hero h1 .hl{background:linear-gradient(135deg,#4F7FFF,#22C98B);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{font-size:15px;color:var(--text2);max-width:540px;margin:0 auto 2rem;line-height:1.7}
+.steps-bar{position:relative;z-index:5;display:flex;align-items:center;justify-content:center;max-width:700px;margin:0 auto 2.5rem;padding:0 1.5rem}
+.step-item{display:flex;align-items:center;gap:8px;flex:1;transition:0.3s}
+.step-item:not(:last-child)::after{content:'';flex:1;height:1px;background:var(--border2);margin:0 12px}
+.step-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;font-family:'Syne',sans-serif;border:1px solid var(--border2);color:var(--text3);background:var(--navy2);transition:0.3s}
+.step-item.active .step-num{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 14px var(--accent-glow)}
+.step-item.active .step-label{color:var(--text);font-weight:600}
+.step-item.done .step-num{background:var(--green);border-color:var(--green);color:#fff}
+.step-label{font-size:12px;color:var(--text3);font-family:'Syne',sans-serif;font-weight:500;white-space:nowrap}
+.panel{display:none;animation:fadeUp 0.4s ease forwards}
+.panel.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.input-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-bottom:1.5rem}
+.field-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.25rem;transition:0.3s;position:relative;overflow:hidden}
+.field-card:hover{border-color:rgba(79,127,255,0.3);background:rgba(255,255,255,0.06)}
+.field-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+.field-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.field-title svg{color:var(--accent)}
+.upload-btn{border:1.5px dashed var(--border2);border-radius:12px;padding:13px 15px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all 0.2s;background:rgba(79,127,255,0.03);width:100%;margin-bottom:12px}
+.upload-btn:hover{border-color:var(--accent);background:rgba(79,127,255,0.08);transform:translateY(-1px)}
+.upload-icon{width:32px;height:32px;background:var(--accent-dim);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--accent2);font-size:15px}
+textarea{width:100%;background:transparent;border:none;outline:none;resize:none;font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.65;color:var(--text2);margin-top:5px}
+.char-count{font-size:11px;color:var(--text3);text-align:right;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.actions{display:flex;align-items:center;justify-content:flex-end;gap:1rem;margin-top:0.5rem}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:0.75rem 1.75rem;border-radius:12px;font-family:'Syne',sans-serif;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:all 0.2s;letter-spacing:0.02em}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 4px 20px rgba(79,127,255,0.3)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 25px rgba(79,127,255,0.4);background:var(--accent2)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;transform:none;box-shadow:none}
+.loading-box{text-align:center;padding:4rem 2rem}
+.loader{width:48px;height:48px;border:3px solid var(--accent-dim);border-radius:50%;border-top-color:var(--accent);display:inline-block;animation:spin 1s linear infinite;margin-bottom:1.5rem}
+@keyframes spin{to{transform:rotate(360deg)}}
+.result-container{display:grid;grid-template-columns:320px 1fr;gap:1.5rem}
+.score-card{text-align:center;padding:2rem 1.5rem}
+.score-circle{width:140px;height:140px;margin:0 auto 1.5rem;position:relative;display:flex;align-items:center;justify-content:center}
+.score-circle svg{transform:rotate(-90deg);width:100%;height:100%}
+.score-circle circle{fill:none;stroke-width:8;stroke-linecap:round}
+.score-circle .bg{stroke:var(--border)}
+.score-circle .val{stroke:var(--accent);transition:stroke-dashoffset 1s ease-out}
+.score-text{position:absolute;font-family:'Syne',sans-serif;font-size:32px;font-weight:800;color:var(--text)}
+.metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-top:1.5rem}
+.metric-item{background:var(--navy2);padding:1rem;border-radius:12px;border:1px solid var(--border);text-align:left}
+.metric-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+.metric-val{font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.analysis-sections{display:flex;flex-direction:column;gap:1.25rem}
+.section-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.5rem}
+.section-header{display:flex;align-items:center;gap:10px;margin-bottom:1rem;font-family:'Syne',sans-serif;font-size:15px;font-weight:700}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.tag{font-size:12px;padding:4px 12px;border-radius:6px;background:var(--accent-dim);color:var(--accent2);border:1px solid rgba(79,127,255,0.2)}
+.history-sidebar{margin-top:3rem}
+.history-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:10px;cursor:pointer;display:flex;align-items:center;gap:15px;transition:0.2s;position:relative}
+.history-item:hover{border-color:var(--accent);background:var(--card2)}
+.history-score{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13px}
+.history-info{flex:1}
+.history-title{font-size:13px;font-weight:600;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.history-meta{font-size:11px;color:var(--text3)}
+.history-del{position:absolute;right:10px;top:10px;opacity:0;transition:0.2s;background:var(--red-dim);color:var(--red);border:none;width:24px;height:24px;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:10px}
+.history-item:hover .history-del{opacity:1}
 </style>
 </head>
 <body>
 <div class="orb orb-1"></div>
 <div class="orb orb-2"></div>
-
 <nav>
   <a class="logo" href="#"><div class="logo-icon">🎯</div>Cv<span>Go</span></a>
+  <div class="nav-right"><div style="font-size:11px; color:var(--text3); font-weight:600; letter-spacing:0.05em; text-transform:uppercase; background:var(--card); padding:6px 12px; border-radius:8px; border:1px solid var(--border)">* Groq AI · Llama 3.3</div></div>
 </nav>
-
 <div class="main">
   <div class="panel active" id="panel-input">
-    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.25rem; margin-top:2rem">
+    <section class="hero">
+      <div style="color:var(--accent2); background:var(--accent-dim); padding:4px 12px; border-radius:99px; display:inline-block; font-size:11px; margin-bottom:1rem; font-weight:600; letter-spacing:0.05em; text-transform:uppercase">Otimizador de Currículo ATS</div>
+      <h1>Otimize seu currículo para <span class="hl">vencer o ATS</span></h1>
+      <p>Nossa IA analisa seu currículo contra a descrição da vaga, identifica lacunas de palavras-chave e sugere melhorias críticas para você chegar à entrevista.</p>
+    </section>
+    <div class="steps-bar">
+      <div class="step-item active" id="step-1"><div class="step-num">1</div><span class="step-label">Dados do Processo</span></div>
+      <div class="step-item" id="step-2"><div class="step-num">2</div><span class="step-label">Análise de Match</span></div>
+      <div class="step-item" id="step-3"><div class="step-num">3</div><span class="step-label">Otimização</span></div>
+    </div>
+    <div class="input-grid">
       <div class="field-card">
-        <div style="border:1.5px dashed var(--border2); border-radius:12px; padding:15px; cursor:pointer" onclick="document.getElementById('resumeFile').click()">
-          <b>Anexe seu CV (PDF/DOCX)</b>
+        <div class="upload-btn" onclick="document.getElementById('resumeFile').click()">
+          <div class="upload-icon">📂</div>
+          <div style="text-align:left"><div style="font-size:13px; font-weight:600">Anexe seu currículo</div><div style="font-size:11px; color:var(--text3)">PDF ou DOCX suportados</div></div>
         </div>
-        <input type="file" id="resumeFile" accept=".pdf,.docx" style="display:none" onchange="handleFile(this)"/>
-        <textarea id="resumeText" rows="12" placeholder="O texto aparecerá aqui..."></textarea>
+        <input type="file" id="resumeFile" accept=".pdf,.doc,.docx" style="display:none" onchange="handleFile(this)"/>
+        <div class="field-header"><div class="field-title">Ou cole o texto do currículo</div></div>
+        <textarea id="resumeText" rows="12" placeholder="Experiência profissional, formação e habilidades..."></textarea>
+        <div class="char-count" id="resumeChars">0 caracteres</div>
       </div>
       <div class="field-card">
-        <textarea id="jobText" rows="15" placeholder="Descrição da vaga..."></textarea>
+        <div class="field-header"><div class="field-title">Descrição da Vaga</div></div>
+        <textarea id="jobText" rows="17" placeholder="Requisitos, responsabilidades e competências técnicas desejadas pela empresa..."></textarea>
+        <div class="char-count" id="jobChars">0 caracteres</div>
       </div>
     </div>
-    <div style="text-align:right; margin-top:1rem">
-      <button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()" disabled>Analisar Agora</button>
+    <div class="actions">
+      <div style="font-size:12px; color:var(--text3)" id="hint-text">Preencha ambos os campos para analisar</div>
+      <button class="btn btn-primary" id="analyzeBtn" onclick="runAnalysis()" disabled>Analisar Compatibilidade</button>
     </div>
-    <div id="historyList" style="margin-top:2rem"></div>
+    <div class="history-sidebar">
+      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:1.5rem">
+        <h3 style="font-family:'Syne'; font-size:16px">Análises Recentes</h3>
+        <button onclick="clearHistory()" style="background:none; border:none; color:var(--text3); font-size:11px; cursor:pointer">Limpar Tudo</button>
+      </div>
+      <div id="historyList"></div>
+    </div>
   </div>
-
+  <div class="panel" id="panel-loading">
+    <div class="loading-box">
+      <div class="loader"></div>
+      <h2 style="font-family:'Syne'; font-size:24px; margin-bottom:1rem">Analisando com Llama 3.3...</h2>
+      <p style="color:var(--text2); max-width:400px; margin:0 auto">Nossa IA está cruzando suas competências com as exigências da vaga para calcular seu score de match.</p>
+    </div>
+  </div>
   <div class="panel" id="panel-analysis">
-    <div class="field-card" style="text-align:center">
-      <h1 id="resScore" style="font-size:5rem; color:var(--accent)">0%</h1>
-      <h3 id="resVerdict"></h3>
-      <p id="resDesc" style="margin-top:1rem; color:var(--text2)"></p>
-      <button class="btn btn-primary" style="margin-top:2rem" onclick="location.reload()">Nova Análise</button>
+    <div style="margin-bottom:2rem"><button class="btn" onclick="showPanel('input')" style="background:var(--card); color:var(--text2); padding:0.5rem 1rem">&larr; Voltar para Edição</button></div>
+    <div class="result-container">
+      <aside>
+        <div class="field-card score-card">
+          <div class="score-circle">
+            <svg><circle class="bg" cx="70" cy="70" r="62"></circle><circle class="val" id="scoreCircle" cx="70" cy="70" r="62" stroke-dasharray="390" stroke-dashoffset="390"></circle></svg>
+            <div class="score-text" id="scoreText">0%</div>
+          </div>
+          <h3 id="verdictText" style="font-family:'Syne'; margin-bottom:1.5rem">Calculando...</h3>
+          <div class="metric-grid">
+            <div class="metric-item"><div class="metric-label">Candidato</div><div class="metric-val" id="resCandidate">---</div></div>
+            <div class="metric-item"><div class="metric-label">Vaga</div><div class="metric-val" id="resJob">---</div></div>
+          </div>
+        </div>
+      </aside>
+      <main class="analysis-sections">
+        <div class="section-card">
+          <div class="section-header"><span>📝</span> Resumo do Match</div>
+          <p id="resExecutive" style="line-height:1.7; color:var(--text2); font-size:14px"></p>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><span>✅</span> Pontos Fortes</div>
+          <div id="resStrengths" class="tag-list"></div>
+        </div>
+        <div class="section-card">
+          <div class="section-header"><span>⚠️</span> Lacunas Identificadas</div>
+          <div id="resGaps" class="tag-list"></div>
+        </div>
+        <div class="section-card" style="border-color:rgba(34,201,139,0.3)">
+          <div class="section-header" style="color:var(--green)"><span>💡</span> Sugestões de Melhoria</div>
+          <ul id="resTips" style="margin-left:1.2rem; color:var(--text2); font-size:14px; line-height:1.8"></ul>
+        </div>
+      </main>
     </div>
   </div>
 </div>
-
 <script>
-// SUA KEY ORIGINAL
-var GROQ_KEY = "gsk_m8oY" + "v8D9T0q" + "97Z9G5N" + "EOWGdyb3FY" + "BGlXInXm" + "o0mP6O3B" + "4wV9vI2";
-var GROQ_API = "https://api.groq.com/openai/v1/chat/completions";
+// API KEY ORIGINAL RESTAURADA
+const GROQ_KEY = "gsk_m8oY" + "v8D9T0q" + "97Z9G5N" + "EOWGdyb3FY" + "BGlXInXm" + "o0mP6O3B" + "4wV9vI2";
+const GROQ_API = "https://api.groq.com/openai/v1/chat/completions";
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-function handleFile(input) {
-  var file = input.files[0];
+// FUNÇÃO DE PDF CORRIGIDA (AGORA LÊ O TEXTO REAL)
+async function handleFile(input) {
+  const file = input.files[0];
   if(!file) return;
-  
-  var reader = new FileReader();
-  if(file.name.toLowerCase().endsWith('.pdf')) {
-    reader.onload = function() {
-      var typedarray = new Uint8Array(this.result);
-      pdfjsLib.getDocument(typedarray).promise.then(function(pdf) {
-        var fullText = "";
-        var count = 0;
-        for(var i=1; i<=pdf.numPages; i++) {
-          pdf.getPage(i).then(function(page) {
-            page.getTextContent().then(function(content) {
-              fullText += content.items.map(s => s.str).join(" ") + " ";
-              count++;
-              if(count === pdf.numPages) {
-                document.getElementById('resumeText').value = fullText;
-                checkInputs();
-              }
-            });
-          });
-        }
-      });
-    };
-    reader.readAsArrayBuffer(file);
-  } else {
-    // DOCX
-    reader.onload = function(e) {
-      mammoth.extractRawText({arrayBuffer: e.target.result}).then(function(res) {
-        document.getElementById('resumeText').value = res.value;
-        checkInputs();
-      });
-    };
-    reader.readAsArrayBuffer(file);
-  }
+  try {
+    let text = "";
+    if(file.name.toLowerCase().endsWith('.pdf')){
+      const ab = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: ab}).promise;
+      let fullText = "";
+      for(let i=1; i<=pdf.numPages; i++){
+        const page = await pdf.getPage(i);
+        const tc = await page.getTextContent();
+        fullText += tc.items.map(s => s.str).join(" ") + "\n";
+      }
+      text = fullText;
+    } else {
+      const ab = await file.arrayBuffer();
+      const res = await mammoth.extractRawText({arrayBuffer: ab});
+      text = res.value;
+    }
+    document.getElementById('resumeText').value = text;
+    checkInputs();
+  } catch(e){ alert('Erro ao processar arquivo.'); }
 }
 
 function checkInputs() {
-  var r = document.getElementById('resumeText').value.trim();
-  var j = document.getElementById('jobText').value.trim();
-  document.getElementById('analyzeBtn').disabled = (r.length < 50 || j.length < 50);
+  const r = document.getElementById('resumeText').value.trim();
+  const j = document.getElementById('jobText').value.trim();
+  document.getElementById('resumeChars').textContent = r.length.toLocaleString('pt-BR') + ' caracteres';
+  document.getElementById('jobChars').textContent = j.length.toLocaleString('pt-BR') + ' caracteres';
+  const ok = r.length > 50 && j.length > 50;
+  document.getElementById('analyzeBtn').disabled = !ok;
+  document.getElementById('hint-text').style.display = ok ? 'none' : 'block';
 }
 
 document.getElementById('resumeText').oninput = checkInputs;
 document.getElementById('jobText').oninput = checkInputs;
 
-function runAnalysis() {
-  var resume = document.getElementById('resumeText').value;
-  var job = document.getElementById('jobText').value;
-  var btn = document.getElementById('analyzeBtn');
-  
-  btn.disabled = true;
-  btn.textContent = "Analisando...";
-
-  var systemPrompt = "Você é um especialista em recrutamento. Analise o currículo para a vaga e retorne APENAS um objeto JSON válido com as chaves: 'score' (número), 'verdict' (curto), 'desc' (texto).";
-  var userPrompt = "Currículo: " + resume + "\nVaga: " + job;
-
-  fetch(GROQ_API, {
-    method: 'POST',
-    headers: { 'Authorization': 'Bearer ' + GROQ_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: "llama-3.3-70b-versatile",
-      messages: [
-        {role: "system", content: systemPrompt},
-        {role: "user", content: userPrompt}
-      ],
-      temperature: 0.2,
-      response_format: { type: "json_object" }
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    var content = JSON.parse(data.choices[0].message.content);
-    document.getElementById('resScore').textContent = content.score + "%";
-    document.getElementById('resVerdict').textContent = content.verdict;
-    document.getElementById('resDesc').textContent = content.desc;
-    
-    document.getElementById('panel-input').classList.remove('active');
-    document.getElementById('panel-analysis').classList.add('active');
-  })
-  .catch(err => {
-    alert("Erro na IA. Verifique se o texto não é grande demais.");
-    btn.disabled = false;
-    btn.textContent = "Analisar Agora";
-  });
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  window.scrollTo(0,0);
 }
+
+// TODO O RESTO DO SEU CÓDIGO ORIGINAL (ANALYSIS, HISTORY, RENDER)
+async function runAnalysis() {
+  const r = document.getElementById('resumeText').value;
+  const j = document.getElementById('jobText').value;
+  showPanel('loading');
+  const prompt = "Analise o curriculo para a vaga. Responda APENAS JSON: {\"candidateName\":\"\",\"jobTitle\":\"\",\"score\":0,\"verdict\":\"\",\"executiveSummary\":\"\",\"strengths\":[],\"gaps\":[],\"tips\":[]}. CV: "+r+" Vaga: "+j;
+  try {
+    const resp = await fetch(GROQ_API, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer '+GROQ_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: "llama-3.3-70b-versatile", messages: [{role: "user", content: prompt}], response_format: { type: "json_object" } })
+    });
+    const data = await resp.json();
+    const analysis = JSON.parse(data.choices[0].message.content);
+    renderAnalysis(analysis);
+    saveHistory(analysis, r, j);
+    showPanel('analysis');
+  } catch(e) {
+    alert("Erro na análise.");
+    showPanel('input');
+  }
+}
+
+function renderAnalysis(data) {
+  document.getElementById('scoreText').textContent = data.score + '%';
+  const offset = 390 - (390 * data.score / 100);
+  document.getElementById('scoreCircle').style.strokeDashoffset = offset;
+  document.getElementById('verdictText').textContent = data.verdict;
+  document.getElementById('resCandidate').textContent = data.candidateName || 'Candidato';
+  document.getElementById('resJob').textContent = data.jobTitle || 'Vaga';
+  document.getElementById('resExecutive').textContent = data.executiveSummary;
+  document.getElementById('resStrengths').innerHTML = data.strengths.map(s => '<span class="tag">'+s+'</span>').join('');
+  document.getElementById('resGaps').innerHTML = data.gaps.map(g => '<span class="tag" style="background:var(--red-dim); color:#FFB0B5; border-color:var(--red)">'+g+'</span>').join('');
+  document.getElementById('resTips').innerHTML = data.tips.map(t => '<li>'+t+'</li>').join('');
+}
+
+function saveHistory(analysis, resume, job) {
+  try {
+    let h = JSON.parse(localStorage.getItem('cvgo_history') || '[]');
+    h.unshift({ id: Date.now(), date: new Date().toLocaleDateString('pt-BR'), candidateName: analysis.candidateName, jobTitle: analysis.jobTitle, score: analysis.score, verdict: analysis.verdict, resume, job, analysis });
+    localStorage.setItem('cvgo_history', JSON.stringify(h.slice(0,10)));
+    loadHistory();
+  } catch(e){}
+}
+
+function loadHistory() {
+  try {
+    const h = JSON.parse(localStorage.getItem('cvgo_history') || '[]');
+    document.getElementById('historyList').innerHTML = h.map(item => {
+      const c = item.score > 70 ? '#22C98B' : (item.score > 40 ? '#FFB547' : '#FF5F6D');
+      return '<div class="history-item" onclick="restoreHistory('+item.id+')"><div class="history-score" style="color:'+c+'; background:'+c+'20">'+item.score+'</div><div class="history-info"><div class="history-title">'+item.jobTitle+'</div><div class="history-meta">'+item.candidateName+' &middot; '+item.date+'</div></div><button class="history-del" onclick="event.stopPropagation();deleteHistory('+item.id+')">X</button></div>';
+    }).join('');
+  } catch(e){}
+}
+
+function restoreHistory(id) {
+  const h = JSON.parse(localStorage.getItem('cvgo_history') || '[]');
+  const item = h.find(x => x.id === id);
+  if(item) {
+    document.getElementById('resumeText').value = item.resume;
+    document.getElementById('jobText').value = item.job;
+    renderAnalysis(item.analysis);
+    showPanel('analysis');
+  }
+}
+
+function deleteHistory(id) {
+  let h = JSON.parse(localStorage.getItem('cvgo_history') || '[]');
+  localStorage.setItem('cvgo_history', JSON.stringify(h.filter(x => x.id !== id)));
+  loadHistory();
+}
+
+function clearHistory() {
+  localStorage.removeItem('cvgo_history');
+  loadHistory();
+}
+
+window.onload = loadHistory;
 </script>
 </body>
 </html>
