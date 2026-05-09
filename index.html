@@ -388,28 +388,52 @@ function fillResumeText(text){
 function extractPDF(file){
   var reader = new FileReader();
   reader.onload = function(e){
-    try{
-      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-      pdfjsLib.getDocument({data: new Uint8Array(e.target.result)}).promise.then(function(pdf){
-        var txt = ''; var pages = pdf.numPages; var done = 0;
-        for(var i = 1; i <= pages; i++){
-          pdf.getPage(i).then(function(page){
-            page.getTextContent().then(function(tc){
-              var lastY = null;
-              tc.items.forEach(function(item){
-                if(lastY !== null && Math.abs(item.transform[5] - lastY) > 5) txt += '\n';
-                txt += item.str + ' ';
-                lastY = item.transform[5];
+    var arrayBuffer = e.target.result;
+    // Wait for pdfjsLib to be ready
+    function doExtract(){
+      if(typeof pdfjsLib === 'undefined'){
+        setTimeout(doExtract, 200);
+        return;
+      }
+      try{
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        var loadingTask = pdfjsLib.getDocument({data: new Uint8Array(arrayBuffer)});
+        loadingTask.promise.then(function(pdf){
+          var totalPages = pdf.numPages;
+          var pageTexts = new Array(totalPages);
+          var pagesLoaded = 0;
+          for(var i = 1; i <= totalPages; i++){
+            (function(pageNum){
+              pdf.getPage(pageNum).then(function(page){
+                page.getTextContent().then(function(tc){
+                  var txt = '';
+                  var lastY = null;
+                  tc.items.forEach(function(item){
+                    if(lastY !== null && Math.abs(item.transform[5] - lastY) > 5) txt += '
+';
+                    txt += item.str + ' ';
+                    lastY = item.transform[5];
+                  });
+                  pageTexts[pageNum - 1] = txt;
+                  pagesLoaded++;
+                  if(pagesLoaded === totalPages){
+                    fillResumeText(pageTexts.join('
+'));
+                  }
+                });
               });
-              txt += '\n';
-              done++;
-              if(done === pages) fillResumeText(txt);
-            });
-          });
-        }
-      }).catch(function(err){ setUploadStatus('error','Erro ao ler PDF: ' + err.message); });
-    } catch(err){ setUploadStatus('error','Erro: ' + err.message); }
+            })(i);
+          }
+        }).catch(function(err){
+          setUploadStatus('error','Erro ao ler PDF: ' + err.message + '. Cole o texto manualmente.');
+        });
+      } catch(err){
+        setUploadStatus('error','Erro: ' + err.message + '. Cole o texto manualmente.');
+      }
+    }
+    doExtract();
   };
+  reader.onerror = function(){ setUploadStatus('error','Erro ao ler arquivo.'); };
   reader.readAsArrayBuffer(file);
 }
 function extractDOCX(file){
