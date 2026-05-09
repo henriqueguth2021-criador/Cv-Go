@@ -343,7 +343,7 @@ footer{position:relative;z-index:5;text-align:center;padding:2rem;font-size:12px
 <script>
 // ── CONFIG ── (apenas modelos ativos no Groq em Mai/2026)
 var GROQ_KEY = "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";
-var GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant"];
+var GROQ_MODELS = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "llama3-8b-8192"];
 var GROQ_API = "https://api.groq.com/openai/v1/chat/completions";
 var analysisData = null;
 var rewrittenResume = '';
@@ -451,7 +451,14 @@ function truncate(text, max){
 function callGroq(prompt, maxTokens, temp, callback){
   var models = GROQ_MODELS.slice();
   function tryModel(idx){
-    if(idx >= models.length){ callback(null, 'Todos os modelos falharam. Tente novamente em 1 minuto.'); return; }
+    if(idx >= models.length){
+      // All models hit rate limit - wait 10s and retry from start
+      if(idx === models.length){
+        setTimeout(function(){ tryModel(0); }, 10000);
+        callback(null, 'Rate limit atingido. Tentando novamente em 10 segundos...');
+      }
+      return;
+    }
     fetch(GROQ_API, {
       method: 'POST',
       headers: {'Content-Type':'application/json','Authorization':'Bearer ' + GROQ_KEY},
@@ -467,7 +474,7 @@ function callGroq(prompt, maxTokens, temp, callback){
         if(!text){ callback(null, 'Resposta vazia. Tente novamente.'); return; }
         callback(text, null);
       });
-    }).catch(function(e){ callback(null, 'Erro de rede: ' + e.message); });
+    }).catch(function(e){ tryModel(idx + 1); });
   }
   tryModel(0);
 }
@@ -484,11 +491,7 @@ function runAnalysis(){
   var mi = 0; var lm = document.getElementById('loadingMsg');
   var iv = setInterval(function(){ lm.textContent = msgs[Math.min(++mi, msgs.length-1)]; }, 1800);
 
-  var prompt = 'Voce e especialista em recrutamento ATS. Analise a compatibilidade e retorne APENAS JSON valido sem markdown.\n\nREGRA IMPORTANTE: todos os valores numericos em score e metrics devem ser INTEIROS de 0 a 100 representando porcentagem real. Por exemplo: keywords:90 significa 90% de compatibilidade em palavras-chave. NUNCA retorne valores como 7, 8, 9 a menos que a compatibilidade seja realmente 7%.\n\nCURRICULO:\n' + truncate(resume, 3000) + '\n\nVAGA:\n' + truncate(job, 2000) + '\n\nRetorne EXATAMENTE neste formato (com valores reais de compatibilidade):\n{"score":85,"metrics":{"keywords":90,"experience":95,"skills":80,"format":75},"verdict":"Muito Bom","verdict_desc":"Curriculo bem alinhado com a vaga","keywords_found":["palavra1"],"keywords_missing":["palavra2"],"keywords_partial":["palavra3"],"strengths":["ponto forte 1"],"weaknesses":["melhoria 1"],"tips":["dica 1"]}'
-
-  callGroq(prompt, 1200, 0.2, function(text, err){
-    clearInterval(iv);
-    if(err){ document.getElementById('analysis-loading').style.display = 'none'; document.getElementById('analysis-result').innerHTML = '<div class="error-box">Erro: ' + err + '</div>'; document.getElementById('analysis-result').style.display = 'block'; return; }
+  var prompt = 'Analise a compatibilidade ATS entre este curriculo e esta vaga. Retorne APENAS JSON valido.\n\nREGRAS DO SCORE:\n- 90-100: curriculo excelente, quase todas as palavras-chave presentes\n- 70-89: bom curriculo, maioria das palavras-chave presente\n- 50-69: curriculo regular, faltam palavras importantes\n- abaixo de 50: curriculo fraco para esta vaga\n\nCURRICULO:\n' + truncate(resume, 3000) + '\n\nVAGA:\n' + truncate(job, 2000) + '\n\nRetorne este JSON preenchido com valores reais (sem markdown):\n{"score":85,"metrics":{"keywords":90,"experience":85,"skills":80,"format":75},"verdict":"Muito Bom","verdict_desc":"Curriculo bem alinhado com requisitos da vaga","keywords_found":["kw1","kw2"],"keywords_missing":["kw3"],"keywords_partial":["kw4"],"strengths":["ponto forte 1","ponto forte 2"],"weaknesses":["melhoria 1","melhoria 2"],"tips":["dica 1","dica 2"]}' document.getElementById('analysis-result').style.display = 'block'; return; }
     try{
       var json = text.replace(/```json|```/g,'').trim();
       analysisData = JSON.parse(json);
@@ -542,60 +545,27 @@ function runRewrite(){
   showPanel('resume');
   document.getElementById('resume-loading').style.display = 'block';
   document.getElementById('resume-result').style.display = 'none';
-  resetProgress('progressFill2', 12);
-  var msgs = ['Analisando pontos de melhoria...','Adicionando palavras-chave...','Ajustando formato ATS...','Finalizando...'];
+  resetProgress('progressFill2', 8);
+  var msgs = ['Inserindo palavras-chave...','Ajustando resumo...','Finalizando...'];
   var mi = 0; var lm = document.getElementById('resumeLoadingMsg');
-  var iv = setInterval(function(){ lm.textContent = msgs[Math.min(++mi, msgs.length-1)]; }, 2500);
+  var iv = setInterval(function(){ lm.textContent = msgs[Math.min(++mi, msgs.length-1)]; }, 2000);
 
   var missing = analysisData ? (analysisData.keywords_missing || []) : [];
-  var weaknesses = analysisData ? (analysisData.weaknesses || []) : [];
-  var tips = analysisData ? (analysisData.tips || []) : [];
-
-  // Extract education from resume to guarantee preservation
-  var lines = resume.split('\n');
-  var eduLines = []; var inEdu = false;
-  for(var i = 0; i < lines.length; i++){
-    var l = lines[i].toLowerCase();
-    if(['forma','gradua','mba','tecno','universidade','faculdade','bacharel','pos-grad','especiali'].some(function(k){ return l.indexOf(k) >= 0; })) inEdu = true;
-    if(inEdu){ eduLines.push(lines[i]); if(lines[i].trim() === '' && eduLines.length > 3) break; }
-  }
-  var edu = eduLines.join('\n').trim();
+  var missingStr = missing.join(', ');
 
   var prompt =
-    'Voce e especialista em curriculos ATS. Sua tarefa e MELHORAR o curriculo abaixo SEM piorar o que ja esta bom.\n\n'
-    + 'REGRAS CRITICAS:\n'
-    + '1. NAO remova nenhum bullet point, experiencia ou habilidade que ja existe\n'
-    + '2. NAO altere nomes de empresas, cargos ou datas\n'
-    + '3. APENAS adicione as palavras-chave ausentes de forma natural\n'
-    + '4. APENAS corrija os pontos de melhoria usando experiencias ja existentes\n'
-    + '5. Mantenha o mesmo estilo e tom do curriculo original\n'
-    + '6. Texto puro, sem markdown, sem **, sem ##\n'
-    + '7. Use bullet • para todos os itens\n'
-    + '8. Cada secao aparece UMA vez\n\n'
-    + 'CURRICULO ORIGINAL (preserve tudo isso):\n' + truncate(resume, 4500) + '\n\n'
-    + 'VAGA:\n' + truncate(job, 800) + '\n\n'
-    + (missing.length ? 'PALAVRAS PARA ADICIONAR (insira 1x de forma natural no resumo ou competencias):\n' + missing.join(', ') + '\n\n' : '')
-    + (weaknesses.length ? 'PONTOS A MELHORAR (adapte frases existentes, nao invente):\n' + weaknesses.join('\n') + '\n\n' : '')
-    + (edu ? 'FORMACAO (copie exatamente, nao altere):\n' + edu + '\n\n' : '')
-    + 'FORMATO DE SAIDA:\n'
-    + 'NOME COMPLETO\n'
-    + 'Cargo | Especialidade\n'
-    + 'Email | Telefone | Cidade\n\n'
-    + 'OBJETIVO PROFISSIONAL\n'
-    + '[2-3 linhas]\n\n'
-    + 'RESUMO PROFISSIONAL\n'
-    + '[5-6 linhas com palavras-chave adicionadas aqui]\n\n'
-    + 'EXPERIENCIA PROFISSIONAL\n'
-    + '[COPIE todas as experiencias e bullets do original exatamente]\n\n'
-    + 'FORMACAO ACADEMICA\n'
-    + '[COPIE exatamente]\n\n'
-    + 'COMPETENCIAS TECNICAS\n'
-    + '[habilidades do original + novas palavras-chave | separadas por |]\n\n'
-    + 'IDIOMAS\n'
-    + '[do original]\n\n'
-    + 'Retorne APENAS o curriculo. Texto puro sem markdown.';
+    'Voce recebeu um curriculo e uma lista de palavras-chave ausentes.\n'
+    + 'Sua UNICA tarefa e:\n'
+    + '1. Copiar o curriculo EXATAMENTE como esta\n'
+    + '2. No campo RESUMO PROFISSIONAL, adicionar as palavras ausentes de forma natural na ultima frase\n'
+    + '3. Na secao COMPETENCIAS, adicionar as palavras ausentes ao final da lista\n'
+    + '4. NAO mudar mais NADA. Nem uma virgula.\n'
+    + '5. Remover qualquer ** ou * do texto\n'
+    + '6. Retornar o curriculo completo em texto puro\n\n'
+    + 'PALAVRAS PARA ADICIONAR: ' + (missingStr || 'nenhuma') + '\n\n'
+    + 'CURRICULO:\n' + resume;
 
-  callGroq(prompt, 5000, 0.1, function(text, err){
+  callGroq(prompt, 6000, 0.0, function(text, err){
     clearInterval(iv);
     document.getElementById('resume-loading').style.display = 'none';
     if(err){
@@ -603,13 +573,10 @@ function runRewrite(){
       document.getElementById('resume-result').style.display = 'block';
       return;
     }
-    // Clean any markdown that slipped through
     rewrittenResume = text
       .replace(/\*\*([^*]+)\*\*/g, '$1')
       .replace(/\*([^*]+)\*/g, '$1')
       .replace(/^#+\s*/gm, '')
-      .replace(/^\s*[-–]\s+/gm, '• ')
-      .replace(/^\s*\+\s+/gm, '• ')
       .replace(/\n{3,}/g, '\n\n')
       .trim();
     document.getElementById('resumeOutput').textContent = rewrittenResume;
