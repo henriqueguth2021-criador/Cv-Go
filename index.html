@@ -358,31 +358,33 @@ async function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
   input.value = '';
-  setUploadStatus('loading', 'Extraindo texto do arquivo...');
+  setUploadStatus('loading', 'Extraindo texto...');
   try {
-    let text = '';
+    let text = "";
     if (file.name.toLowerCase().endsWith('.pdf')) {
       const ab = await file.arrayBuffer();
       const pdf = await pdfjsLib.getDocument({data: ab}).promise;
+      let fullText = "";
       for (let i = 1; i <= pdf.numPages; i++) {
         const page = await pdf.getPage(i);
         const tc = await page.getTextContent();
-        text += tc.items.map(s => s.str).join(' ') + '\n';
+        fullText += tc.items.map(s => s.str).join(" ") + "\n";
       }
+      text = fullText;
     } else {
       const ab = await file.arrayBuffer();
       const res = await mammoth.extractRawText({arrayBuffer: ab});
       text = res.value;
     }
     if (!text || text.trim().length < 30) {
-      setUploadStatus('error', 'Não foi possível extrair texto. Cole manualmente.');
+      setUploadStatus('error', 'Nao foi possivel extrair texto. Cole manualmente.');
       return;
     }
     document.getElementById('resumeText').value = text.trim();
     checkInputs();
-    setUploadStatus('success', '✓ ' + file.name + ' — ' + text.trim().length.toLocaleString('pt-BR') + ' caracteres');
+    setUploadStatus('success', file.name + ' — ' + text.trim().length.toLocaleString('pt-BR') + ' caracteres');
   } catch(e) {
-    setUploadStatus('error', 'Erro ao processar arquivo. Cole o texto manualmente.');
+    setUploadStatus('error', 'Erro ao processar arquivo: ' + e.message);
   }
 }
 
